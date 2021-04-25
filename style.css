@@ -1,0 +1,40 @@
+body {
+    margin: 0;
+    background-color: #7cb361;
+    background-image: url("textures/black-felt.png");
+}
+
+g-layout {
+}
+
+g-pool {
+    font-size: 30px;
+}
+g-board {
+    display: block;
+    font-size: 30px;
+    touch-action: none;
+    user-select: none;
+    text-align: center;
+}
+#board {
+    background-color: #6b673a;
+    background-image: url("textures/dark-wood.png");
+    border-radius: 10px 10px 0 0;
+    height: 14ex;
+}
+#players {
+    background-color: gray;
+}
+g-stone.blue {
+    color: blue;
+}
+g-stone.red {
+    color: red;
+}
+g-stone.orange {
+    color: #f78e08;
+}
+g-stone.black {
+    color: black;
+}
