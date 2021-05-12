@@ -94,7 +94,8 @@ export class Player extends HTMLElement {
         if (!winner) {
             winner = "You";
         }
-        window.confirm(`${winner} won!`)
+        const dialogs = await import("./dialogs.js");
+        return dialogs.winner(winner);
     }
 }
 
