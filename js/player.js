@@ -151,6 +151,12 @@ export class RemotePlayer extends Player {
         )
     }
 
+    async showTable(table_data) {
+        return remote.rpc(
+            this.peerConnection, "show table", table_data,
+        )
+}
+
     async winner(winner) {
         return remote.rpc(
             this.peerConnection, "winner", winner,

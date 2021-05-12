@@ -38,7 +38,7 @@ export class Layout extends HTMLElement {
         <slot name="pool"></slot>
         `
         this.innerHTML = `
-        <g-board slot="table" id="table" ondrop="publishTable"></g-board>
+        <g-board slot="table" id="table" ondrop="publishTable()"></g-board>
         <g-pool slot="pool"></g-pool>
         <g-board slot="board" id="board" drop></g-board>
         <div slot="players">

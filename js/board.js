@@ -223,7 +223,11 @@ export class Stone extends HTMLElement {
             drop_source.append(this);
         }
         drop_target.insertAdjacentElement(position, drop_source);
-        drop_target.closest("g-board").space();
+        const board = drop_target.closest("g-board");
+        board.space();
+        if (board.ondrop) {
+            board.ondrop(end_event);
+        }
     }
 }
 
@@ -242,11 +246,6 @@ export class Board extends HTMLElement {
         interact(this)
         .dropzone({
             overlap: "center",
-            ondrop: (dropEvent) => {
-                if (this.ondrop) {
-                    this.ondrop(dropEvent);
-                }
-            }
         });
     }
 

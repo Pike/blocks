@@ -119,6 +119,9 @@ class Remote {
             case "mark active":
                 await game.markActive(body);
                 break;
+            case "show table":
+                table.drawGame(body);
+                break;
             case "winner":
                 data = await document.querySelector("g-player").winner(body);
                 break;
