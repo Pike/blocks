@@ -24,7 +24,7 @@
   "homepage": "https://github.com/Pike/blocks#readme",
   "devDependencies": {
     "@interactjs/types": "^1.10.27",
-    "vite": "^5.0.0"
+    "vite": "^6.3.3"
   },
   "dependencies": {
     "interactjs": "^1.10.27",
