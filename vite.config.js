@@ -2,6 +2,7 @@
 
 export default {
   root: '.',
+  base: '/blocks/',
   build: {
     target: 'esnext',
   }  
