@@ -1,3 +1,6 @@
+import interact from "interactjs";
+import { elements } from "./elements.js";
+import state from "./state.js";
 import { createStone, color_classes } from "./model.js";
 
 export class Group extends HTMLElement {
@@ -226,9 +229,17 @@ export class Stone extends HTMLElement {
         const board = drop_target.closest("g-board");
         board.space();
         if (board.ondrop) {
-            board.ondrop(end_event);
+            publishTable(end_event);
         }
     }
+}
+
+async function publishTable(e) {
+    const { table } = elements;
+    const table_data = table.data();
+    await Promise.all(Array.from(document.querySelectorAll("g-remote"))
+        .map(player => player.showTable(table_data))
+    );
 }
 
 export class Board extends HTMLElement {
@@ -278,10 +289,6 @@ export class Board extends HTMLElement {
 
     get empty() {
         return this.querySelector("g-stone") === null;
-    }
-
-    pullStone(pool) {
-        this.appendStone(createStone(pool.pop()));
     }
 
     appendStone(stone) {
@@ -335,6 +342,35 @@ export class Pool extends HTMLElement {
             nextPlayer();
         }
     }
+}
+
+function nextPlayer() {
+    const {board, table} = elements;
+    const {pool} = state;
+    const current = document.querySelector("g-player.active");
+    if (!current) {
+        // We're not active
+        return;
+    }
+    if (board.empty) {
+        declareWinner(current);
+        return;
+    }
+    const next = current.nextElementSibling || current.parentElement.firstElementChild;
+    if (current.needsStone) {
+        board.appendStone(createStone(pool.pop()));
+    }
+    current.deactivate();
+    next.activate(pool, table.data());
+}
+
+
+async function declareWinner(winner) {
+    const {game} = elements;
+    await Promise.all(
+        Array.from(game.players)
+        .map(player => player.winner(winner === player ? null : winner.name))
+    )
 }
 
 customElements.define("g-board", Board);

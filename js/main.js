@@ -1,20 +1,23 @@
-let table, board, deck, pool, model, game;
+import { remote } from "./remote.js";
+import { Player } from "./player.js";
+import {Deck} from "./model.js"
+let table, board, game;
 
 Promise.all([
-    import("./model.js"),
     import("./layout.js"),
-    import("./player.js"),
-]).then((modules) => {
+]).then(() => {
     table = document.getElementById("table");
     board = document.getElementById("board");
     game = document.querySelector("g-layout");
-    model = modules[0];
     boot();
 });
 
 async function boot() {
     const params = new URLSearchParams(document.location.search);
-    await remote.beMyself(params.get("name"));
+    const myself = params.get("name");
+    const id = await remote.beMyself(myself);
+    const player = new Player(myself, id);
+    game.addPlayer(player);
     if (params.has("host")) {
         await remote.connectToHostedGame(params.get("host"));
     }
@@ -26,47 +29,16 @@ async function deal() {
     let comms = Promise.all(game.mapPlayers(
         (player) => player.arrangePlayers(players_ids)
     ));
-    deck = new model.Deck();
+    const deck = new Deck();
     shuffle(deck.cards);
-    pool = deck.cards.map(String);
+    let pool = deck.cards.map(String);
     await comms;
     for (const player of game.players) {
         pool = await player.deal(pool);
     }
     game.players[0].activate(pool, "");
 }
-
-async function publishTable(e) {
-    const table_data = table.data();
-    await Promise.all(Array.from(document.querySelectorAll("g-remote"))
-        .map(player => player.showTable(table_data))
-    );
-}
-
-function nextPlayer() {
-    const current = document.querySelector("g-player.active");
-    if (!current) {
-        // We're not active
-        return;
-    }
-    if (board.empty) {
-        declareWinner(current);
-        return;
-    }
-    const next = current.nextElementSibling || current.parentElement.firstElementChild;
-    if (current.needsStone) {
-        board.pullStone(pool);
-    }
-    current.deactivate();
-    next.activate(pool, table.data());
-}
-
-async function declareWinner(winner) {
-    await Promise.all(
-        Array.from(game.players)
-        .map(player => player.winner(winner === player ? null : winner.name))
-    )
-}
+globalThis.deal = deal;
 
 function shuffle(array) {
     const len = array.length;

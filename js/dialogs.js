@@ -1,4 +1,6 @@
-const DIALOG_INNER = (function() {
+import exlusivePaper from "../textures/exclusive_paper.png";
+
+const DIALOG_INNER = (function () {
     const template = document.createElement('template');
     template.innerHTML = `
 <style>
@@ -17,7 +19,7 @@ const DIALOG_INNER = (function() {
     grid-row: 2;
     padding: 3ex;
     border-radius: 20px;
-    background-image: url("textures/exclusive_paper.png");
+    background-image: url("${exlusivePaper}");
 }
 </style>
 <div class="outer">
@@ -38,12 +40,12 @@ class Dialog extends HTMLElement {
     }
 
     connectedCallback() {
-        const shadow = this.attachShadow({mode: "open"});
+        const shadow = this.attachShadow({ mode: "open" });
         shadow.appendChild(DIALOG_INNER.cloneNode(true));
         this.addEventListener("click", () => this.close());
     }
 
-    waitForClose(timeout=10*1000) {
+    waitForClose(timeout = 10 * 1000) {
         return new Promise((resolve, reject) => {
             if (this.resolve_) {
                 reject("Only one waiting promise supported");

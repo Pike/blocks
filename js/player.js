@@ -1,9 +1,11 @@
-// global pool, table;
+import { elements } from "./elements.js";
+import state from "./state.js";
 
 export class Player extends HTMLElement {
-    constructor(name) {
+    constructor(name, id) {
         super();
         this.preBoard_ = null;
+        this.id = id;
         const shadow = this.attachShadow({mode: "open"});
         shadow.innerHTML = `
         <style>
@@ -34,14 +36,16 @@ export class Player extends HTMLElement {
     }
 
     get peer() {
-        return remote.me.id;
+        return this.id;
     }
 
     async arrangePlayers(player_ids) {
+        const {game} = elements
         game.arrangePlayers(player_ids);
     }
 
     async deal(pool) {
+        const {board, table} = elements
         board.drawGame(pool.splice(0, 14));
         table.drawGame([]);
         this.deactivate();
@@ -49,7 +53,8 @@ export class Player extends HTMLElement {
     }
 
     async activate(pool_, table_data) {
-        pool = pool_;
+        const {game, board, table} = elements
+        state.setPool(pool_);
         table.drawGame(table_data);
         table.enableDrop();
         this.preBoard_ = board.data().join("").split("").sort().join("");
@@ -57,14 +62,17 @@ export class Player extends HTMLElement {
     }
 
     async markActive(peer) {
+        const {game} = elements
         game.markActive(peer);
     }
 
     get needsStone() {
+        const {game} = elements
         return this.preBoard_ === board.data().join("").split("").sort().join("");
     }
 
     deactivate() {
+        const {table} = elements
         table.disableDrop();
         this.classList.remove("active");
         this.preBoard_ = null;
@@ -75,14 +83,15 @@ export class Player extends HTMLElement {
      *
      * We need to call (or delegate) `connect players`
      * @param {dataConnection} remote_player
+     * @param {Remote} remoteInstance
      */
-    async addPlayer(remote_player) {
-        const resp = await remote.rpc(
+    async addPlayer(remote_player, remoteInstance) {
+        const resp = await remoteInstance.rpc(
             remote_player, "connect players", {
                 name: this.name,
             }
         );
-        const player = new RemotePlayer(remote_player, resp.name);
+        const player = new RemotePlayer(remote_player, resp.name, remoteInstance);
         game.addPlayer(player);
     }
 
@@ -100,9 +109,10 @@ export class Player extends HTMLElement {
 }
 
 export class RemotePlayer extends Player {
-    constructor(peer, name) {
+    constructor(peer, name, remoteInstance) {
         super(name);
         this.peerConnection = peer;
+        this.remote = remoteInstance;
     }
 
     get peer() {
@@ -116,7 +126,7 @@ export class RemotePlayer extends Player {
      * @param {dataConnection} remote_player
      */
      async addPlayer(remote_player) {
-        const resp = await remote.rpc(
+        const resp = await this.remote.rpc(
             this.peerConnection, "add player", {
                 id: remote_player.peer,
             }
@@ -124,13 +134,13 @@ export class RemotePlayer extends Player {
     }
 
     async arrangePlayers(player_ids) {
-        return remote.rpc(
+        return this.remote.rpc(
             this.peerConnection, "arrange players", player_ids,
         )
     }
 
     async deal(pool) {
-        const rv = await remote.rpc(this.peerConnection, "deal", pool);
+        const rv = await this.remote.rpc(this.peerConnection, "deal", pool);
         if (rv.error) {
             throw new Error(rv.error);
         }
@@ -138,7 +148,7 @@ export class RemotePlayer extends Player {
     }
 
     async activate(pool, table_data) {
-        return remote.rpc(
+        return this.remote.rpc(
             this.peerConnection, "activate", {
                 pool, table_data
             }
@@ -146,19 +156,19 @@ export class RemotePlayer extends Player {
     }
 
     async markActive(peer) {
-        return remote.rpc(
+        return this.remote.rpc(
             this.peerConnection, "mark active", peer,
         )
     }
 
     async showTable(table_data) {
-        return remote.rpc(
+        return this.remote.rpc(
             this.peerConnection, "show table", table_data,
         )
-}
+    }
 
     async winner(winner) {
-        return remote.rpc(
+        return this.remote.rpc(
             this.peerConnection, "winner", winner,
         )
     }

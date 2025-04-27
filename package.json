@@ -1,0 +1,33 @@
+{
+  "name": "blocks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pike/blocks.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Pike/blocks/issues"
+  },
+  "homepage": "https://github.com/Pike/blocks#readme",
+  "devDependencies": {
+    "@interactjs/types": "^1.10.27",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "interactjs": "^1.10.27",
+    "peerjs": "^1.5.4"
+  }
+}

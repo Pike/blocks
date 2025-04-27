@@ -1,4 +1,6 @@
-const playerModule = import("./player.js");
+import {Peer} from "peerjs";
+import { RemotePlayer} from "./player.js"
+import { elements } from "./elements.js";
 
 class Remote {
     constructor() {
@@ -18,13 +20,11 @@ class Remote {
 
     async beMyself(myself) {
         this.myname = myself;
-        this.me = new peerjs.Peer(`pike_github_io-blocks-${myself}`);
+        this.me = new Peer(`pike_github_io-blocks-${myself}`);
         this.me.on(
             "connection",
             (dataConnection) => this.newConnection(dataConnection)
         );
-        const player = new (await playerModule).Player(myself);
-        game.addPlayer(player);
         return new Promise(resolve => {
             this.me.on("open", id => {
                 this.connections.set(id, this.me);
@@ -80,6 +80,7 @@ class Remote {
     async dispatchCall(sender, data) {
         const type = "call response";
         const {method, body, msgId} = data;
+        const {game} = elements;
         console.log("call", data);
         data = "ok";
         switch (method) {
@@ -103,7 +104,7 @@ class Remote {
                 break;
             case "connect players":
                 // Add remote player, let them know my name
-                const player = new (await playerModule).RemotePlayer(sender, body.name);
+                const player = new RemotePlayer(sender, body.name, this);
                 game.addPlayer(player);
                 data = {name: this.myname};
                 break;
@@ -141,4 +142,4 @@ class Remote {
     }
 }
 
-const remote = new Remote();
+export const remote = new Remote();
