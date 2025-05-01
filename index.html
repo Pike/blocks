@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,7 +10,28 @@
     <script type="module" src="/js/main.js"></script>
     <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
     <g-layout></g-layout>
+    <dialog id="users">
+        <form method="dialog">
+            <h2>Spieler</h2>
+            <div id="user-list">
+                <div><label for="name">Mein Name:</label> <input name="name" required></div>
+                <div><input type="radio" id="host" name="isHost">
+                    <label for="host">Ich bin Gastgeber</label>
+                </div>
+                <div><input type="radio" id="otherHost" name="isHost">
+                    <label for="otherHost">Anderer Gastgeber</label>
+                </div>
+                <div><input name="host" disabled placeholder="Gastgeber"></div>
+                <div style="visibility:hidden;"><input type="number" name="bots" id="bots" min="0" max="3" value="0">
+                    <label for="bots">Bots</label>
+                </div>
+            </div>
+            <button id="close">Spiel beginnen</button>
+        </form>
+    </dialog>
 </body>
+
 </html>

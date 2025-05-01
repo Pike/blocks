@@ -1,6 +1,6 @@
 import { remote } from "./remote.js";
 import { Player } from "./player.js";
-import {Deck} from "./model.js"
+import { Deck } from "./model.js"
 let table, board, game;
 
 Promise.all([
@@ -9,17 +9,53 @@ Promise.all([
     table = document.getElementById("table");
     board = document.getElementById("board");
     game = document.querySelector("g-layout");
-    boot();
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const name = globalThis.localStorage.getItem("name");
+    const host = globalThis.localStorage.getItem("host");
+    const userDialog = document.getElementById("users");
+    const nameInput = userDialog.querySelector("input[name=name]");
+    const hostInput = userDialog.querySelector("input[name=host]");
+    const [hostCheck, otherHostCHeck] = userDialog.querySelectorAll("input[name=isHost]");
+    const bots = userDialog.querySelector("input[name=bots]");
+    hostCheck.addEventListener("change", (event) => {
+        hostInput.disabled = true;
+        hostInput.required = false;
+        bots.parentElement.style.visibility = "inherit";
+    });
+    otherHostCHeck.addEventListener("change", (event) => {
+        hostInput.disabled = false;
+        hostInput.required = true;
+        bots.parentElement.style.visibility = "hidden";
+    }
+    );
+    nameInput.value = name || "";
+    hostInput.value = host || "";
+    if (!host) {
+        otherHostCHeck.checked = true;
+    }
+    userDialog.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const name = nameInput.value;
+        const host = hostInput.value;
+        globalThis.localStorage.setItem("name", name);
+        globalThis.localStorage.setItem("host", host);
+        userDialog.close();
+        boot();
+    }
+    );
+    userDialog.showModal();
 });
 
 async function boot() {
-    const params = new URLSearchParams(document.location.search);
-    const myself = params.get("name");
-    const id = await remote.beMyself(myself);
-    const player = new Player(myself, id);
+    const name = globalThis.localStorage.getItem("name");
+    const host = globalThis.localStorage.getItem("host");
+    const id = await remote.beMyself(name);
+    const player = new Player(name, id);
     game.addPlayer(player);
-    if (params.has("host")) {
-        await remote.connectToHostedGame(params.get("host"));
+    if (host) {
+        await remote.connectToHostedGame(host);
     }
 }
 
