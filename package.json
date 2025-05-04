@@ -27,6 +27,7 @@
     "vite": "^6.3.3"
   },
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.20.1",
     "interactjs": "^1.10.27",
     "peerjs": "^1.5.4"
   }

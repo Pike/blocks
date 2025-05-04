@@ -12,6 +12,7 @@ Promise.all([
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+    setupMenu();
     const name = globalThis.localStorage.getItem("name");
     const host = globalThis.localStorage.getItem("host");
     const userDialog = document.getElementById("users");
@@ -47,6 +48,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     userDialog.showModal();
 });
+
+function setupMenu() {
+    const menu = document.getElementById("menu");
+    const startGame = document.getElementById("startGame");
+    const settings = document.getElementById("settings");
+    startGame.addEventListener("click", async (event) => {
+        await deal();
+        menu.hide();
+    });
+    settings.addEventListener("click", (event) => {
+        menu.hide();
+    });
+}
 
 async function boot() {
     const name = globalThis.localStorage.getItem("name");

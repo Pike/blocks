@@ -36,6 +36,7 @@ export class Layout extends HTMLElement {
             <slot name="players"></slot>
         </div>
         <slot name="pool"></slot>
+        <slot name="menu"></slot>
         `
         this.innerHTML = `
         <g-board slot="table" id="table" ondrop></g-board>
@@ -43,6 +44,13 @@ export class Layout extends HTMLElement {
         <g-board slot="board" id="board" drop></g-board>
         <div slot="players">
         </div>
+        <sl-dropdown id="menu" slot="menu">
+            <sl-icon-button name="gear" label="Settings" slot="trigger" style="font-size: 2rem;"></sl-icon-button>
+            <sl-menu>
+                <sl-menu-item id="settings">Einstellungen</sl-menu-item>
+                <sl-menu-item id="startGame">Spiel starten</sl-menu-item>
+            </sl-menu>
+        </sl-dropdown>
         `
     }
 
