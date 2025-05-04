@@ -1,10 +1,10 @@
 import { Board } from "./board.js";
 
 export class Layout extends HTMLElement {
-    constructor() {
-        super();
-        const shadow = this.attachShadow({ mode: "open" });
-        shadow.innerHTML = `
+  constructor() {
+    super();
+    const shadow = this.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
         <style>
         :host {
             display: flex;
@@ -37,8 +37,8 @@ export class Layout extends HTMLElement {
         </div>
         <slot name="pool"></slot>
         <slot name="menu"></slot>
-        `
-        this.innerHTML = `
+        `;
+    this.innerHTML = `
         <g-board slot="table" id="table" ondrop></g-board>
         <g-pool slot="pool"></g-pool>
         <g-board slot="board" id="board" drop></g-board>
@@ -51,45 +51,45 @@ export class Layout extends HTMLElement {
                 <sl-menu-item id="startGame">Spiel starten</sl-menu-item>
             </sl-menu>
         </sl-dropdown>
-        `
-    }
+        `;
+  }
 
-    get players() {
-        return this.querySelectorAll("g-player, g-remote");
-    }
+  get players() {
+    return this.querySelectorAll("g-player, g-remote");
+  }
 
-    mapPlayers(fun) {
-        return Array.from(this.players).map(fun);
-    }
+  mapPlayers(fun) {
+    return Array.from(this.players).map(fun);
+  }
 
-    addPlayer(player) {
-        this.querySelector("[slot=players]").append(player);
-    }
+  addPlayer(player) {
+    this.querySelector("[slot=players]").append(player);
+  }
 
-    arrangePlayers(player_ids) {
-        const container = this.querySelector("[slot=players]");
-        while (player_ids.length) {
-            const player_id = player_ids.pop();
-            for (const player of container.children) {
-                if (player.peer === player_id) {
-                    container.append(player);
-                    break;
-                }
-            }
+  arrangePlayers(player_ids) {
+    const container = this.querySelector("[slot=players]");
+    while (player_ids.length) {
+      const player_id = player_ids.pop();
+      for (const player of container.children) {
+        if (player.peer === player_id) {
+          container.append(player);
+          break;
         }
+      }
     }
+  }
 
-    markActive(peer) {
-        const container = this.querySelector("[slot=players]");
-        for (const player of container.querySelectorAll(".active")) {
-            player.classList.remove("active");
-        }
-        for (const player of container.children) {
-            if (player.peer === peer) {
-                player.classList.add("active");
-            }
-        }
+  markActive(peer) {
+    const container = this.querySelector("[slot=players]");
+    for (const player of container.querySelectorAll(".active")) {
+      player.classList.remove("active");
     }
+    for (const player of container.children) {
+      if (player.peer === peer) {
+        player.classList.add("active");
+      }
+    }
+  }
 }
 
 customElements.define("g-layout", Layout);

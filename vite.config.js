@@ -1,9 +1,9 @@
 /** @type {import('vite').UserConfig} */
 
 export default {
-  root: '.',
-  base: '/blocks/',
+  root: ".",
+  base: "/blocks/",
   build: {
-    target: 'esnext',
-  }  
+    target: "esnext",
+  },
 };
