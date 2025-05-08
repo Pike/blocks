@@ -1,31 +1,32 @@
 import { elements } from "./elements.js";
 import state from "./state.js";
 
+const player_sheet = new CSSStyleSheet();
+player_sheet.replaceSync(`
+:host {
+  display: block;
+  background-color: aqua;
+  border-radius: 5px;
+  border: 1px solid black;
+  height: 12ex;
+}
+:host(.active) {
+  border-width: 2px;
+}
+span {
+  margin: 2px;
+  float:right;
+}
+`);
+
 export class Player extends HTMLElement {
   constructor(name, id) {
     super();
     this.preBoard_ = null;
     this.id = id;
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.innerHTML = `
-        <style>
-        :host {
-            display: block;
-            background-color: aqua;
-            border-radius: 5px;
-            border: 1px solid black;
-            height: 12ex;
-        }
-        :host(.active) {
-            border-width: 2px;
-        }
-        span {
-            margin: 2px;
-            float:right;
-        }
-        </style>
-        <span><slot></slot></span>
-        `;
+    shadow.adoptedStyleSheets = [player_sheet];
+    shadow.innerHTML = `<span><slot></slot></span>`;
     if (name) {
       this.append(name);
     }

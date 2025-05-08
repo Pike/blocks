@@ -10,6 +10,7 @@ Promise.all([import("./layout.js")]).then(() => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await customElements.whenDefined("g-layout");
   setupMenu();
   const name = globalThis.localStorage.getItem("name");
   const host = globalThis.localStorage.getItem("host");
@@ -31,8 +32,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   nameInput.value = name || "";
   hostInput.value = host || "";
-  if (!host) {
+  if (host) {
     otherHostCHeck.checked = true;
+  } else {
+    hostCheck.checked = true;
   }
   userDialog.addEventListener("submit", (event) => {
     event.preventDefault();

@@ -1,27 +1,29 @@
 import exlusivePaper from "../textures/exclusive_paper.png";
 
+const dialog_sheet = new CSSStyleSheet();
+dialog_sheet.replaceSync(`
+.outer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  grid-template-columns: 1fr auto 1fr;
+}
+.inner {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 3ex;
+  border-radius: 20px;
+  background-image: url("${exlusivePaper}");
+}
+`);
+
 const DIALOG_INNER = (function () {
   const template = document.createElement("template");
   template.innerHTML = `
-<style>
-.outer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    display: grid;
-    grid-template-rows: 1fr auto 1fr;
-    grid-template-columns: 1fr auto 1fr;
-}
-.inner {
-    grid-column: 2;
-    grid-row: 2;
-    padding: 3ex;
-    border-radius: 20px;
-    background-image: url("${exlusivePaper}");
-}
-</style>
 <div class="outer">
   <div class="inner">
     <slot></slot>
@@ -42,6 +44,7 @@ class Dialog extends HTMLElement {
   connectedCallback() {
     const shadow = this.attachShadow({ mode: "open" });
     shadow.appendChild(DIALOG_INNER.cloneNode(true));
+    shadow.adoptedStyleSheets = [dialog_sheet];
     this.addEventListener("click", () => this.close());
   }
 

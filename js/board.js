@@ -3,19 +3,20 @@ import { elements } from "./elements.js";
 import state from "./state.js";
 import { createStone, color_classes } from "./model.js";
 
+const group_sheet = new CSSStyleSheet();
+group_sheet.replaceSync(`
+:host {
+  display: inline-block;
+  margin-right: 1ex;
+}
+`);
+
 export class Group extends HTMLElement {
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.innerHTML = `
-        <style>
-        :host {
-            display: inline-block;
-            margin-right: 1ex;
-        }
-        </style>
-        <slot></slot>
-        `;
+    shadow.adoptedStyleSheets = [group_sheet];
+    shadow.innerHTML = `<slot></slot>`;
   }
 
   toString() {
@@ -23,29 +24,32 @@ export class Group extends HTMLElement {
   }
 }
 
+const stone_sheet = new CSSStyleSheet();
+stone_sheet.replaceSync(`
+:host {
+  display: inline-block;
+}
+span {
+  border-radius: 5px;
+  border: 1px solid black;
+  display: inline-block;
+  width: 4ex;
+  height: 5ex;
+  text-align: center;
+  vertical-align: text-top;
+  margin: 2px;
+  margin-bottom: 1ex;
+  background-color: #f5db9e;
+}
+`);
+
 export class Stone extends HTMLElement {
   constructor(serialized) {
     super();
     this.stone_ = undefined;
     const shadow = this.attachShadow({ mode: "open" });
+    shadow.adoptedStyleSheets = [stone_sheet];
     shadow.innerHTML = `
-        <style>
-        :host {
-            display: inline-block;
-        }
-        span {
-            border-radius: 5px;
-            border: 1px solid black;
-            display: inline-block;
-            width: 4ex;
-            height: 5ex;
-            text-align: center;
-            vertical-align: text-top;
-            margin: 2px;
-            margin-bottom: 1ex;
-            background-color: #f5db9e;
-        }
-        </style>
         <span><slot></slot></span>
         `;
     if (!serialized) {
@@ -321,30 +325,28 @@ export class Board extends HTMLElement {
   }
 }
 
+const pool_sheet = new CSSStyleSheet();
+pool_sheet.replaceSync(`
+:host {
+  display: inline-block;
+  border-radius: 5px;
+  border: 1px solid black;
+  display: inline-block;
+  width: 4ex;
+  height: 5ex;
+  text-align: center;
+  vertical-align: text-top;
+  margin: 2px;
+  margin-bottom: 1ex;
+  background-color: #f5db9e;
+}
+`);
+
 export class Pool extends HTMLElement {
   constructor(serialized) {
     super();
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.innerHTML = `
-        <style>
-        :host {
-            display: inline-block;
-        }
-        span {
-            border-radius: 5px;
-            border: 1px solid black;
-            display: inline-block;
-            width: 4ex;
-            height: 5ex;
-            text-align: center;
-            vertical-align: text-top;
-            margin: 2px;
-            margin-bottom: 1ex;
-            background-color: #f5db9e;
-        }
-        </style>
-        <span> </span>
-        `;
+    shadow.adoptedStyleSheets = [pool_sheet];
   }
   connectedCallback() {
     this.onclick = () => {
