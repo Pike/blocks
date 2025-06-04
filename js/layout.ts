@@ -1,4 +1,7 @@
-import { Board } from "./board.js";
+// Remove unused import and add proper interface
+interface PlayerElement extends HTMLElement {
+  peer: string;
+}
 
 const s = new CSSStyleSheet();
 s.replaceSync(`
@@ -57,24 +60,34 @@ export class Layout extends HTMLElement {
         `;
   }
 
-  get players() {
-    return this.querySelectorAll("g-player, g-remote");
+  get players(): NodeListOf<PlayerElement> {
+    return this.querySelectorAll(
+      "g-player, g-remote",
+    ) as NodeListOf<PlayerElement>;
   }
 
-  mapPlayers(fun) {
+  mapPlayers<T>(fun: (player: PlayerElement) => T): T[] {
     return Array.from(this.players).map(fun);
   }
 
-  addPlayer(player) {
-    this.querySelector("[slot=players]").append(player);
+  addPlayer(player: PlayerElement): void {
+    const container = this.querySelector("[slot=players]");
+    if (container) {
+      container.append(player);
+    }
   }
 
-  arrangePlayers(player_ids) {
+  arrangePlayers(player_ids: string[]): void {
     const container = this.querySelector("[slot=players]");
+    if (!container) return;
+
     while (player_ids.length) {
       const player_id = player_ids.pop();
+      if (!player_id) continue;
+
       for (const player of container.children) {
-        if (player.peer === player_id) {
+        const playerEl = player as PlayerElement;
+        if (playerEl.peer === player_id) {
           container.append(player);
           break;
         }
@@ -82,13 +95,16 @@ export class Layout extends HTMLElement {
     }
   }
 
-  markActive(peer) {
+  markActive(peer: string): void {
     const container = this.querySelector("[slot=players]");
+    if (!container) return;
+
     for (const player of container.querySelectorAll(".active")) {
       player.classList.remove("active");
     }
     for (const player of container.children) {
-      if (player.peer === peer) {
+      const playerEl = player as PlayerElement;
+      if (playerEl.peer === peer) {
         player.classList.add("active");
       }
     }

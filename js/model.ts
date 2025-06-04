@@ -1,13 +1,17 @@
-export const color_classes = ["black", "blue", "orange", "red"];
+export const color_classes = ["black", "blue", "orange", "red"] as const;
+export type ColorClass = (typeof color_classes)[number];
 
 export class Stone {
-  constructor(color, value) {
+  color: ColorClass;
+  value: string;
+
+  constructor(color: ColorClass, value: string) {
     this.color = color;
     this.value = value;
   }
 
-  toString() {
-    let val;
+  toString(): string {
+    let val: number;
     switch (this.value.slice(0, 2)) {
       case "🤴":
         val = 14;
@@ -21,10 +25,10 @@ export class Stone {
   }
 }
 
-export function createStone(token) {
-  let codepoint = token.codePointAt(0);
+export function createStone(token: string): Stone {
+  let codepoint = token.codePointAt(0)!;
   const color_num = codepoint % 4;
-  let value = codepoint >> 2;
+  let value: string | number = codepoint >> 2;
   if (value == 14) {
     value = "🤴" + (color_num === 0 ? "🏿" : "🏻");
   } else {
@@ -34,17 +38,19 @@ export function createStone(token) {
 }
 
 export class Deck {
+  cards: Stone[];
+
   constructor() {
     const double_cols = color_classes.concat(color_classes);
     const values = Array(13)
       .fill(0)
       .map((_, i) => String(i + 1));
-    this.cards = [].concat.apply(
+    this.cards = ([] as Stone[]).concat(
       [new Stone("black", "🤴🏿"), new Stone("red", "🤴🏻")],
-      double_cols.map((color) => values.map((val) => new Stone(color, val))),
+      ...double_cols.map((color) => values.map((val) => new Stone(color, val))),
     );
   }
-  shuffle() {
+  shuffle(): void {
     const len = this.cards.length;
     for (let start = 0; start < len - 1; ++start) {
       const other = Math.floor(Math.random() * len);
@@ -54,10 +60,10 @@ export class Deck {
       ];
     }
   }
-  pop() {
+  pop(): Stone | undefined {
     return this.cards.pop();
   }
-  toString() {
+  toString(): string {
     return this.cards.map((c) => String(c)).join("");
   }
 }

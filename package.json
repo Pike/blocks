@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "tsc": "tsc -b",
     "prepare": "husky"
   },
   "repository": {
@@ -24,9 +25,12 @@
   "homepage": "https://github.com/Pike/blocks#readme",
   "devDependencies": {
     "@interactjs/types": "^1.10.27",
+    "@types/node": "^22.15.21",
+    "@vitejs/plugin-react": "^4.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
     "vite": "^6.3.3"
   },
   "lint-staged": {

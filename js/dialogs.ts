@@ -34,6 +34,9 @@ const DIALOG_INNER = (function () {
 })();
 
 class Dialog extends HTMLElement {
+  timeout_: number | null;
+  listener_: EventListener | null;
+  resolve_: (() => void) | null;
   constructor() {
     super();
     this.timeout_ = null;
@@ -49,7 +52,7 @@ class Dialog extends HTMLElement {
   }
 
   waitForClose(timeout = 10 * 1000) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       if (this.resolve_) {
         reject("Only one waiting promise supported");
       } else {
@@ -75,7 +78,7 @@ class Dialog extends HTMLElement {
 customElements.define("g-dialog", Dialog);
 const registered = customElements.whenDefined("g-dialog");
 
-export async function winner(winner) {
+export async function winner(winner: string) {
   await registered;
   const dialog = document.createElement("g-dialog");
   dialog.innerHTML = `
@@ -83,5 +86,7 @@ export async function winner(winner) {
 <p>${winner} won</p>
     `;
   document.body.append(dialog);
-  return dialog.waitForClose();
+  if (dialog instanceof Dialog) {
+    return dialog.waitForClose();
+  }
 }

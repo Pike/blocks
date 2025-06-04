@@ -1,7 +1,23 @@
 import interact from "interactjs";
-import { elements } from "./elements.js";
-import state from "./state.js";
-import { createStone, color_classes } from "./model.js";
+import { elements } from "./elements";
+import state from "./state";
+import {
+  createStone,
+  color_classes,
+  Stone as StoneModel,
+  type ColorClass,
+} from "./model";
+
+// Type definitions for interact.js events
+interface InteractEvent {
+  dx: number;
+  dy: number;
+  rect?: DOMRect;
+  interactable?: any;
+  dropzone?: any;
+  relatedTarget?: HTMLElement;
+  target?: HTMLElement;
+}
 
 const group_sheet = new CSSStyleSheet();
 group_sheet.replaceSync(`
@@ -44,7 +60,9 @@ span {
 `);
 
 export class Stone extends HTMLElement {
-  constructor(serialized) {
+  private stone_: StoneModel | undefined;
+
+  constructor(serialized?: string) {
     super();
     this.stone_ = undefined;
     const shadow = this.attachShadow({ mode: "open" });
@@ -58,14 +76,14 @@ export class Stone extends HTMLElement {
     this.stone = createStone(serialized);
   }
 
-  get stone() {
+  get stone(): StoneModel | undefined {
     return this.stone_;
   }
 
-  set stone(stone) {
+  set stone(stone: StoneModel) {
     this.stone_ = stone;
     this.classList.forEach((c) => {
-      if (color_classes.includes(c)) {
+      if (color_classes.includes(c as ColorClass)) {
         this.classList.remove(c);
       }
     });
@@ -73,30 +91,31 @@ export class Stone extends HTMLElement {
     this.textContent = stone.value;
   }
 
-  toString() {
+  toString(): string {
     return this.stone ? this.stone.toString() : " ";
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     const dragPosition = {
       x: 0,
       y: 0,
     };
     interact(this).draggable({
       listeners: {
-        start: (start) => {
+        start: (_start: InteractEvent) => {
           dragPosition.x = 0;
           dragPosition.y = 0;
         },
-        move: (move) => {
+        move: (move: InteractEvent) => {
           dragPosition.x += move.dx;
           dragPosition.y += move.dy;
           this.style.transform = `translate(${dragPosition.x}px, ${dragPosition.y}px)`;
         },
-        end: (end) => {
+        end: (end: InteractEvent) => {
           const original_group = this.parentElement;
           this.maybeDrop(end);
           if (
+            original_group &&
             original_group.localName === "g-group" &&
             original_group.childElementCount === 0
           ) {
@@ -117,17 +136,16 @@ export class Stone extends HTMLElement {
       },
     });
   }
-  maybeDrop(end_event) {
+  maybeDrop(end_event: any): void {
     if (!end_event.dropzone) {
       // drop aborted, don't move
       return;
     }
     const rect = end_event.rect || end_event.interactable.getRect();
-    const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const stones = Array.from(
       end_event.relatedTarget.querySelectorAll("g-stone"),
-    ).filter((n) => n !== end_event.target);
+    ).filter((n: any) => n !== end_event.target) as any[];
     if (stones.length === 0) {
       const first_group = new Group();
       first_group.append(this);
@@ -135,12 +153,12 @@ export class Stone extends HTMLElement {
       end_event.relatedTarget.append(" ");
       return;
     }
-    let node, drop_target;
+    let node: any, drop_target: any;
     let new_block = true;
     while (stones.length > 3) {
       const pivot = Math.floor(stones.length / 2);
       node = stones[pivot];
-      const candidate_rect = interact.getElementRect(node);
+      const candidate_rect = interact.getElementRect(node as any);
       if (cy < candidate_rect.top) {
         stones.splice(pivot, pivot + 1);
         continue;
@@ -165,14 +183,14 @@ export class Stone extends HTMLElement {
         stones.splice(pivot + 1, pivot);
       }
     }
-    let before,
+    let before: any,
       maybe_after = stones[stones.length - 1];
     if (!drop_target) {
       // Check remaining drop candidates one by one.
       // We either want a new block, or didn't find
       // the drop target in bisection.
       for (const node of stones) {
-        const candidate_rect = interact.getElementRect(node);
+        const candidate_rect = interact.getElementRect(node as any);
         if (cy < candidate_rect.top) {
           before = node;
           break;
@@ -202,9 +220,9 @@ export class Stone extends HTMLElement {
       }
     }
     // Do we prepend or append to target?
-    let position = before ? "beforebegin" : "afterend";
-    if (drop_target) {
-      if (rect.left > drop_target.offsetLeft) {
+    let position: InsertPosition = before ? "beforebegin" : "afterend";
+    if (drop_target && (drop_target as HTMLElement).offsetLeft !== undefined) {
+      if (rect.left > (drop_target as HTMLElement).offsetLeft) {
         position = "afterend";
       } else {
         position = "beforebegin";
@@ -213,45 +231,53 @@ export class Stone extends HTMLElement {
       drop_target = before || maybe_after;
     }
     // Do we need to split the old block? Only if we're a series
-    let next, previous;
+    let next: Element | null, previous: Element | null;
     if (
       (next = this.nextElementSibling) &&
       (previous = this.previousElementSibling)
     ) {
+      const nextStone = next as Stone;
+      const prevStone = previous as Stone;
       if (
-        previous.stone.value !== next.stone.value &&
-        previous.stone.color === next.stone.color
+        nextStone.stone &&
+        prevStone.stone &&
+        prevStone.stone.value !== nextStone.stone.value &&
+        prevStone.stone.color === nextStone.stone.color
       ) {
         const split_group = new Group();
         while (next) {
           split_group.append(next);
           next = this.nextElementSibling;
         }
-        this.parentElement.insertAdjacentElement("afterend", split_group);
-        this.parentElement.insertAdjacentText("afterend", " ");
+        this.parentElement?.insertAdjacentElement("afterend", split_group);
+        this.parentElement?.insertAdjacentText("afterend", " ");
       }
     }
-    let drop_source = this;
+    let drop_source: Element | Group = this;
     if (new_block) {
       drop_source = new Group();
-      drop_target = drop_target.parentElement;
+      drop_target = (drop_target as Element)?.parentElement;
       drop_source.append(this);
     }
-    drop_target.insertAdjacentElement(position, drop_source);
-    const board = drop_target.closest("g-board");
-    board.space();
-    if (board.ondrop) {
+    (drop_target as Element)?.insertAdjacentElement(
+      position,
+      drop_source as Element,
+    );
+    const board = (drop_target as Element)?.closest("g-board") as Board;
+    board?.space();
+    if ((board as any)?.ondrop) {
       publishTable(end_event);
     }
   }
 }
 
-async function publishTable(e) {
+async function publishTable(_e: any): Promise<void> {
   const { table } = elements;
-  const table_data = table.data();
+  if (!table) return;
+  const table_data = (table as any).data();
   await Promise.all(
     Array.from(document.querySelectorAll("g-remote")).map((player) =>
-      player.showTable(table_data),
+      (player as any).showTable(table_data),
     ),
   );
 }
@@ -261,23 +287,23 @@ export class Board extends HTMLElement {
     super();
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     if (this.hasAttribute("drop")) {
       this.enableDrop();
     }
   }
 
-  enableDrop() {
+  enableDrop(): void {
     interact(this).dropzone({
       overlap: "center",
     });
   }
 
-  disableDrop() {
+  disableDrop(): void {
     interact(this).unset();
   }
 
-  drawGame(serialized) {
+  drawGame(serialized: string[]): void {
     const children = document.createDocumentFragment();
     for (const child of this.elems(serialized)) {
       children.append(child);
@@ -287,11 +313,11 @@ export class Board extends HTMLElement {
     this.space();
   }
 
-  data() {
+  data(): string[] {
     return Array.from(this.querySelectorAll("g-group")).map(String);
   }
 
-  space() {
+  space(): void {
     for (const g of this.querySelectorAll("g-group")) {
       if (!g.nextSibling) continue;
       if (g.nextSibling.nodeType !== Node.TEXT_NODE) {
@@ -300,11 +326,11 @@ export class Board extends HTMLElement {
     }
   }
 
-  get empty() {
+  get empty(): boolean {
     return this.querySelector("g-stone") === null;
   }
 
-  appendStone(stone) {
+  appendStone(stone: StoneModel): void {
     const stone_el = new Stone();
     stone_el.stone = stone;
     const group = new Group();
@@ -313,8 +339,8 @@ export class Board extends HTMLElement {
     this.append(" ");
   }
 
-  *elems(serialized) {
-    let group;
+  *elems(serialized: string[]): Generator<HTMLElement> {
+    let group: HTMLElement;
     for (const word of serialized) {
       group = document.createElement("g-group");
       for (const char of word) {
@@ -343,44 +369,51 @@ pool_sheet.replaceSync(`
 `);
 
 export class Pool extends HTMLElement {
-  constructor(serialized) {
+  constructor(_serialized?: string) {
     super();
     const shadow = this.attachShadow({ mode: "open" });
     shadow.adoptedStyleSheets = [pool_sheet];
   }
-  connectedCallback() {
+
+  connectedCallback(): void {
     this.onclick = () => {
       nextPlayer();
     };
   }
 }
 
-function nextPlayer() {
+function nextPlayer(): void {
   const { board, table } = elements;
   const { pool } = state;
   const current = document.querySelector("g-player.active");
-  if (!current) {
+  if (!current || !board || !table) {
     // We're not active
     return;
   }
-  if (board.empty) {
+  if ((board as any).empty) {
     declareWinner(current);
     return;
   }
   const next =
-    current.nextElementSibling || current.parentElement.firstElementChild;
-  if (current.needsStone) {
-    board.appendStone(createStone(pool.pop()));
+    current.nextElementSibling || current.parentElement?.firstElementChild;
+  if ((current as any).needsStone) {
+    const poolToken = pool.pop();
+    if (poolToken) {
+      (board as any).appendStone(createStone(poolToken));
+    }
   }
-  current.deactivate();
-  next.activate(pool, table.data());
+  (current as any).deactivate();
+  if (next) {
+    (next as any).activate(pool, (table as any).data());
+  }
 }
 
-async function declareWinner(winner) {
+async function declareWinner(winner: Element): Promise<void> {
   const { game } = elements;
+  if (!game) return;
   await Promise.all(
-    Array.from(game.players).map((player) =>
-      player.winner(winner === player ? null : winner.name),
+    Array.from((game as any).players || []).map((player: any) =>
+      player.winner(winner === player ? null : (winner as any).name),
     ),
   );
 }

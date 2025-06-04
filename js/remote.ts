@@ -1,38 +1,38 @@
-import { Peer } from "peerjs";
-import { RemotePlayer } from "./player.js";
-import { elements } from "./elements.js";
+import { Peer, type DataConnection } from "peerjs";
+import { RemotePlayer, type Player } from "./player";
+import { elements } from "./elements";
 
 class Remote {
+  me: Peer | null;
+  myname: string | null;
+  connections: Map<string, DataConnection>;
+  host: DataConnection | null;
+  waitingResponses: Map<string, { resolve: Function; reject: Function }>;
   constructor() {
     this.host = null;
     this.me = null;
     this.myname = null;
-    this.player_ = null;
     this.connections = new Map();
     this.waitingResponses = new Map();
-    this.Callback = class {
-      constructor(resolve, reject) {
-        this.resolve = resolve;
-        this.reject = reject;
-      }
-    };
   }
 
-  async beMyself(myself) {
+  async beMyself(myself: string) {
     this.myname = myself;
     this.me = new Peer(`pike_github_io-blocks-${myself}`);
     this.me.on("connection", (dataConnection) =>
       this.newConnection(dataConnection),
     );
-    return new Promise((resolve) => {
+    return new Promise<string>((resolve) => {
+      if (!this.me) {
+        throw new Error("Peer instance is not initialized");
+      }
       this.me.on("open", (id) => {
-        this.connections.set(id, this.me);
         resolve(id);
       });
     });
   }
 
-  async connectToHostedGame(host) {
+  async connectToHostedGame(host: string) {
     const host_id = `pike_github_io-blocks-${host}`;
     const peer = this.me.connect(host_id, {
       label: "game-data",
@@ -49,12 +49,12 @@ class Remote {
     });
   }
 
-  newConnection(dataConnection) {
+  newConnection(dataConnection: DataConnection) {
     this.connections.set(dataConnection.peer, dataConnection);
     dataConnection.on("data", (data) => this.onData(dataConnection, data));
   }
 
-  rpc(remote, method, body) {
+  rpc(remote: DataConnection, method: string, body: any) {
     // Maybe be stricter on something unique?
     const msgId = String(Math.random());
     const type = "call";
@@ -69,7 +69,7 @@ class Remote {
     });
   }
 
-  async onData(sender, data) {
+  async onData(sender: DataConnection, data: any) {
     switch (data.type) {
       case "call":
         this.dispatchCall(sender, data);
@@ -79,15 +79,17 @@ class Remote {
     }
   }
 
-  async dispatchCall(sender, data) {
+  async dispatchCall(sender: DataConnection, data: any) {
     const type = "call response";
     const { method, body, msgId } = data;
-    const { game } = elements;
+    const { game, table } = elements;
     console.log("call", data);
     data = "ok";
     switch (method) {
       case "join game":
-        for (const player of document.querySelectorAll("g-remote, g-player")) {
+        for (const player of document.querySelectorAll<Player>(
+          "g-remote, g-player",
+        )) {
           player.addPlayer(sender);
         }
         break;
@@ -97,7 +99,7 @@ class Remote {
           label: "game-data",
         });
         peer.on("data", (data) => this.onData(peer, data));
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
           peer.on("open", () => resolve(peer));
         });
         await this.rpc(peer, "connect players", {
@@ -114,12 +116,13 @@ class Remote {
         game.arrangePlayers(body);
         break;
       case "deal":
-        data = await document.querySelector("g-player").deal(body);
+        data = await (document.querySelector("g-player") as Player).deal(body);
         break;
       case "activate":
-        await document
-          .querySelector("g-player")
-          .activate(body.pool, body.table_data);
+        (document.querySelector("g-player") as Player).activate(
+          body.pool,
+          body.table_data,
+        );
         break;
       case "mark active":
         await game.markActive(body);
@@ -128,9 +131,10 @@ class Remote {
         table.drawGame(body);
         break;
       case "winner":
-        data = await document.querySelector("g-player").winner(body);
+        data = (document.querySelector("g-player") as Player).winner(body);
         break;
     }
+    console.log("sending response", data);
     sender.send({
       body: data,
       type,
@@ -138,9 +142,14 @@ class Remote {
     });
   }
 
-  handleResponse(sender, data) {
+  handleResponse(_sender: DataConnection, data: any) {
     const { body, msgId } = data;
-    const { resolve, reject } = this.waitingResponses.get(msgId);
+    const entry = this.waitingResponses.get(msgId);
+    if (!entry) {
+      console.warn("No waiting response for msgId:", msgId);
+      return;
+    }
+    const { resolve } = entry;
     this.waitingResponses.delete(msgId);
     console.log("response", data);
     resolve(body);
