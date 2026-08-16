@@ -11,6 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tsc": "tsc -b",
+    "test": "vitest run",
     "prepare": "husky"
   },
   "repository": {
@@ -31,7 +32,8 @@
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
-    "vite": "^6.3.3"
+    "vite": "^6.3.3",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,scss,md}": [

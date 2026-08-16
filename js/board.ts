@@ -7,6 +7,11 @@ import {
   Stone as StoneModel,
   type ColorClass,
 } from "./model";
+import {
+  resolvePlacement,
+  shouldSplitGroup,
+  type IndexedRect,
+} from "./drop-placement";
 
 // Type definitions for interact.js events
 interface InteractEvent {
@@ -142,94 +147,33 @@ export class Stone extends HTMLElement {
       return;
     }
     const rect = end_event.rect || end_event.interactable.getRect();
-    const cy = rect.top + rect.height / 2;
     const stones = Array.from(
       end_event.relatedTarget.querySelectorAll("g-stone"),
     ).filter((n: any) => n !== end_event.target) as any[];
-    if (stones.length === 0) {
+
+    const indexed_rects: IndexedRect[] = stones.map((node, index) => ({
+      index,
+      rect: interact.getElementRect(node as any),
+    }));
+    const placement = resolvePlacement(rect, indexed_rects);
+
+    if (placement.kind === "empty-group") {
       const first_group = new Group();
       first_group.append(this);
       end_event.relatedTarget.append(first_group);
       end_event.relatedTarget.append(" ");
       return;
     }
-    let node: any, drop_target: any;
-    let new_block = true;
-    while (stones.length > 3) {
-      const pivot = Math.floor(stones.length / 2);
-      node = stones[pivot];
-      const candidate_rect = interact.getElementRect(node as any);
-      if (cy < candidate_rect.top) {
-        stones.splice(pivot, pivot + 1);
-        continue;
-      }
-      if (cy > candidate_rect.bottom) {
-        stones.splice(0, pivot + 1);
-        continue;
-      }
-      if (
-        candidate_rect.left <= rect.right &&
-        rect.left <= candidate_rect.right
-      ) {
-        drop_target = node;
-        new_block = false;
-        break;
-      }
-      if (candidate_rect.right <= rect.left) {
-        // We're off to the right, remove up to pivot
-        stones.splice(0, pivot);
-      } else {
-        // We're off to the left, keep pivot and remove rest
-        stones.splice(pivot + 1, pivot);
-      }
-    }
-    let before: any,
-      maybe_after = stones[stones.length - 1];
-    if (!drop_target) {
-      // Check remaining drop candidates one by one.
-      // We either want a new block, or didn't find
-      // the drop target in bisection.
-      for (const node of stones) {
-        const candidate_rect = interact.getElementRect(node as any);
-        if (cy < candidate_rect.top) {
-          before = node;
-          break;
-        }
-        if (candidate_rect.top <= cy && cy <= candidate_rect.bottom) {
-          // We're on the same row
-          if (
-            candidate_rect.left <= rect.right &&
-            rect.left <= candidate_rect.right
-          ) {
-            drop_target = node;
-            new_block = false;
-            break;
-          }
-          if (candidate_rect.right < rect.left) {
-            maybe_after = node;
-          }
-          if (rect.right < candidate_rect.left) {
-            before = node;
-            break;
-          }
-        }
-        if (rect.top > candidate_rect.bottom) {
-          // dropping below the current line
-          maybe_after = node;
-        }
-      }
-    }
-    // Do we prepend or append to target?
-    let position: InsertPosition = before ? "beforebegin" : "afterend";
-    if (drop_target && (drop_target as HTMLElement).offsetLeft !== undefined) {
-      if (rect.left > (drop_target as HTMLElement).offsetLeft) {
-        position = "afterend";
-      } else {
-        position = "beforebegin";
-      }
-    } else {
-      drop_target = before || maybe_after;
-    }
+
+    const new_block = placement.kind === "new-block";
+    const position = placement.position;
+    let drop_target: any =
+      placement.kind === "insert"
+        ? stones[placement.targetIndex]
+        : placement.anchorIndex !== null
+          ? stones[placement.anchorIndex]
+          : undefined;
+
     // Do we need to split the old block? Only if we're a series
     let next: Element | null, previous: Element | null;
     if (
@@ -241,8 +185,7 @@ export class Stone extends HTMLElement {
       if (
         nextStone.stone &&
         prevStone.stone &&
-        prevStone.stone.value !== nextStone.stone.value &&
-        prevStone.stone.color === nextStone.stone.color
+        shouldSplitGroup(prevStone.stone, nextStone.stone)
       ) {
         const split_group = new Group();
         while (next) {
