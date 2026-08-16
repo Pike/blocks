@@ -1,7 +1,4 @@
-// Remove unused import and add proper interface
-interface PlayerElement extends HTMLElement {
-  peer: string;
-}
+import type { Player } from "./player";
 
 const s = new CSSStyleSheet();
 s.replaceSync(`
@@ -60,17 +57,15 @@ export class Layout extends HTMLElement {
         `;
   }
 
-  get players(): NodeListOf<PlayerElement> {
-    return this.querySelectorAll(
-      "g-player, g-remote",
-    ) as NodeListOf<PlayerElement>;
+  get players(): NodeListOf<Player> {
+    return this.querySelectorAll("g-player, g-remote") as NodeListOf<Player>;
   }
 
-  mapPlayers<T>(fun: (player: PlayerElement) => T): T[] {
+  mapPlayers<T>(fun: (player: Player) => T): T[] {
     return Array.from(this.players).map(fun);
   }
 
-  addPlayer(player: PlayerElement): void {
+  addPlayer(player: Player): void {
     const container = this.querySelector("[slot=players]");
     if (container) {
       container.append(player);
@@ -86,7 +81,7 @@ export class Layout extends HTMLElement {
       if (!player_id) continue;
 
       for (const player of container.children) {
-        const playerEl = player as PlayerElement;
+        const playerEl = player as Player;
         if (playerEl.peer === player_id) {
           container.append(player);
           break;
@@ -103,7 +98,7 @@ export class Layout extends HTMLElement {
       player.classList.remove("active");
     }
     for (const player of container.children) {
-      const playerEl = player as PlayerElement;
+      const playerEl = player as Player;
       if (playerEl.peer === peer) {
         player.classList.add("active");
       }
