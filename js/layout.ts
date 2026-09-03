@@ -1,4 +1,7 @@
 import type { Player } from "./player";
+import { elements } from "./elements";
+import state from "./state";
+import { createStone } from "./model";
 
 const s = new CSSStyleSheet();
 s.replaceSync(`
@@ -103,6 +106,42 @@ export class Layout extends HTMLElement {
         player.classList.add("active");
       }
     }
+  }
+
+  nextPlayer(): void {
+    const { board, table } = elements;
+    const { pool } = state;
+    const current = Array.from(this.players).find((player) =>
+      player.classList.contains("active"),
+    );
+    if (!current || !board || !table) {
+      // We're not active
+      return;
+    }
+    if (board.empty) {
+      this.declareWinner(current);
+      return;
+    }
+    const next = (current.nextElementSibling ||
+      current.parentElement?.firstElementChild) as Player | undefined;
+    if (current.needsStone) {
+      const poolToken = pool.pop();
+      if (poolToken) {
+        board.appendStone(createStone(poolToken));
+      }
+    }
+    current.deactivate();
+    if (next) {
+      next.activate(pool, table.data());
+    }
+  }
+
+  private async declareWinner(winner: Player): Promise<void> {
+    await Promise.all(
+      Array.from(this.players).map((player) =>
+        player.winner(winner === player ? undefined : winner.name || undefined),
+      ),
+    );
   }
 }
 

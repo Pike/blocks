@@ -1,7 +1,5 @@
 import interact from "interactjs";
 import { elements } from "./elements";
-import type { Player } from "./player";
-import state from "./state";
 import {
   createStone,
   color_classes,
@@ -321,45 +319,9 @@ export class Pool extends HTMLElement {
 
   connectedCallback(): void {
     this.onclick = () => {
-      nextPlayer();
+      elements.game.nextPlayer();
     };
   }
-}
-
-function nextPlayer(): void {
-  const { board, table } = elements;
-  const { pool } = state;
-  const current = document.querySelector("g-player.active") as Player | null;
-  if (!current || !board || !table) {
-    // We're not active
-    return;
-  }
-  if (board.empty) {
-    declareWinner(current);
-    return;
-  }
-  const next = (current.nextElementSibling ||
-    current.parentElement?.firstElementChild) as Player | undefined;
-  if (current.needsStone) {
-    const poolToken = pool.pop();
-    if (poolToken) {
-      board.appendStone(createStone(poolToken));
-    }
-  }
-  current.deactivate();
-  if (next) {
-    next.activate(pool, table.data());
-  }
-}
-
-async function declareWinner(winner: Player): Promise<void> {
-  const { game } = elements;
-  if (!game) return;
-  await Promise.all(
-    Array.from(game.players).map((player) =>
-      player.winner(winner === player ? undefined : winner.name || undefined),
-    ),
-  );
 }
 
 customElements.define("g-board", Board);
