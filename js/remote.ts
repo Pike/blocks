@@ -1,6 +1,8 @@
 import { Peer, type DataConnection } from "peerjs";
 import { RemotePlayer, type Player } from "./player";
 import { elements } from "./elements";
+import { COMMANDS } from "./commands";
+import { dispatchCommand, type CommandContext } from "./game-commands";
 
 class Remote {
   me: Peer | null;
@@ -34,16 +36,10 @@ class Remote {
 
   async connectToHostedGame(host: string) {
     const host_id = `pike_github_io-blocks-${host}`;
-    const peer = this.me.connect(host_id, {
-      label: "game-data",
-    });
+    const peer = await this.connectPeer(host_id);
     this.connections.set(peer.peer, peer);
     this.host = peer;
-    peer.on("data", (data) => this.onData(peer, data));
-    await new Promise((resolve) => {
-      peer.on("open", () => resolve(peer));
-    });
-    return this.rpc(peer, "join game", {
+    return this.rpc(peer, COMMANDS.JOIN_GAME, {
       id: this.me.id,
       name: this.myname,
     });
@@ -52,6 +48,17 @@ class Remote {
   newConnection(dataConnection: DataConnection) {
     this.connections.set(dataConnection.peer, dataConnection);
     dataConnection.on("data", (data) => this.onData(dataConnection, data));
+  }
+
+  async connectPeer(id: string): Promise<DataConnection> {
+    const peer = this.me.connect(id, {
+      label: "game-data",
+    });
+    peer.on("data", (data) => this.onData(peer, data));
+    await new Promise<void>((resolve) => {
+      peer.on("open", () => resolve());
+    });
+    return peer;
   }
 
   rpc(remote: DataConnection, method: string, body: any) {
@@ -84,59 +91,21 @@ class Remote {
     const { method, body, msgId } = data;
     const { game, table } = elements;
     console.log("call", data);
-    data = "ok";
-    switch (method) {
-      case "join game":
-        for (const player of document.querySelectorAll<Player>(
-          "g-remote, g-player",
-        )) {
-          player.addPlayer(sender);
-        }
-        break;
-      case "add player":
-        // connect to new peer, and `connect players`
-        const peer = this.me.connect(body.id, {
-          label: "game-data",
-        });
-        peer.on("data", (data) => this.onData(peer, data));
-        await new Promise((resolve) => {
-          peer.on("open", () => resolve(peer));
-        });
-        await this.rpc(peer, "connect players", {
-          name: this.myname,
-        });
-        break;
-      case "connect players":
-        // Add remote player, let them know my name
-        const player = new RemotePlayer(sender, body.name, this);
-        game.addPlayer(player);
-        data = { name: this.myname };
-        break;
-      case "arrange players":
-        game.arrangePlayers(body);
-        break;
-      case "deal":
-        data = await (document.querySelector("g-player") as Player).deal(body);
-        break;
-      case "activate":
-        (document.querySelector("g-player") as Player).activate(
-          body.pool,
-          body.table_data,
-        );
-        break;
-      case "mark active":
-        await game.markActive(body);
-        break;
-      case "show table":
-        table.drawGame(body);
-        break;
-      case "winner":
-        data = (document.querySelector("g-player") as Player).winner(body);
-        break;
-    }
-    console.log("sending response", data);
+    // Exactly one non-remote `g-player` is expected to exist per tab.
+    const localPlayer = document.querySelector("g-player") as Player;
+    const ctx: CommandContext = {
+      sender,
+      localPlayer,
+      game,
+      table,
+      remote: this,
+      createRemotePlayer: (connection, name) =>
+        new RemotePlayer(connection, name, this),
+    };
+    const responseBody = await dispatchCommand(method, body, ctx);
+    console.log("sending response", responseBody);
     sender.send({
-      body: data,
+      body: responseBody,
       type,
       msgId,
     });

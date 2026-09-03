@@ -1,5 +1,6 @@
 import { elements } from "./elements";
 import state from "./state";
+import { COMMANDS } from "./commands";
 
 interface DataConnection {
   peer: string;
@@ -104,9 +105,13 @@ export class Player extends HTMLElement {
    * We need to call (or delegate) `connect players`
    */
   async addPlayer(remote_player: DataConnection): Promise<void> {
-    const resp = await this.remote.rpc(remote_player, "connect players", {
-      name: this.name,
-    });
+    const resp = await this.remote.rpc(
+      remote_player,
+      COMMANDS.CONNECT_PLAYERS,
+      {
+        name: this.name,
+      },
+    );
     const player = new RemotePlayer(remote_player, resp.name, this.remote);
     const { game } = elements;
     game.addPlayer(player);
@@ -144,17 +149,21 @@ export class RemotePlayer extends Player {
    * We need to call `add player` to delegate `connect players`
    */
   async addPlayer(remote_player: DataConnection): Promise<void> {
-    await this.remote.rpc(this.peerConnection, "add player", {
+    await this.remote.rpc(this.peerConnection, COMMANDS.ADD_PLAYER, {
       id: remote_player.peer,
     });
   }
 
   async arrangePlayers(player_ids: string[]): Promise<any> {
-    return this.remote.rpc(this.peerConnection, "arrange players", player_ids);
+    return this.remote.rpc(
+      this.peerConnection,
+      COMMANDS.ARRANGE_PLAYERS,
+      player_ids,
+    );
   }
 
   async deal(pool: string[]): Promise<any> {
-    const rv = await this.remote.rpc(this.peerConnection, "deal", pool);
+    const rv = await this.remote.rpc(this.peerConnection, COMMANDS.DEAL, pool);
     if (rv.error) {
       throw new Error(rv.error);
     }
@@ -162,22 +171,26 @@ export class RemotePlayer extends Player {
   }
 
   async activate(pool: string[], table_data: any[]): Promise<any> {
-    return this.remote.rpc(this.peerConnection, "activate", {
+    return this.remote.rpc(this.peerConnection, COMMANDS.ACTIVATE, {
       pool,
       table_data,
     });
   }
 
   async markActive(peer: string): Promise<any> {
-    return this.remote.rpc(this.peerConnection, "mark active", peer);
+    return this.remote.rpc(this.peerConnection, COMMANDS.MARK_ACTIVE, peer);
   }
 
   async showTable(table_data: any[]): Promise<any> {
-    return this.remote.rpc(this.peerConnection, "show table", table_data);
+    return this.remote.rpc(
+      this.peerConnection,
+      COMMANDS.SHOW_TABLE,
+      table_data,
+    );
   }
 
   async winner(winner: string): Promise<any> {
-    return this.remote.rpc(this.peerConnection, "winner", winner);
+    return this.remote.rpc(this.peerConnection, COMMANDS.WINNER, winner);
   }
 }
 
