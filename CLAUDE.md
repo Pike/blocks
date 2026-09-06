@@ -12,7 +12,7 @@ See `package.json` scripts (`dev`, `build`, `preview`, `test`). One thing worth 
 
 ## Architecture
 
-Vanilla Web Components (`customElements.define`, shadow DOM, `adoptedStyleSheets`) — despite `vite.config.ts` loading `@vitejs/plugin-react`, there is no React anywhere in `js/`. Treat that dependency as stray/unused, not a signal to write JSX.
+Vanilla Web Components (`customElements.define`, shadow DOM, `adoptedStyleSheets`).
 
 `js/` module map:
 
