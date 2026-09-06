@@ -9,7 +9,7 @@ One of the 106 numbered, colored playing pieces (or a Joker) that players hold a
 
 **Rack**:
 A player's private collection of tiles, not visible to other players.
-_Avoid_: Board (the code's `Board` class/`g-board` element currently implements both the Rack and the Table with no structural distinction between them)
+_Avoid_: Board (the code's `Board` class/`g-board` element currently implements both the Rack and the Table with no structural distinction between them — kept deliberately unsplit for now, see [ADR-0001](./docs/adr/0001-keep-board-unsplit.md))
 
 **Table**:
 The shared, publicly visible surface where played Sets are placed and manipulated by all players.

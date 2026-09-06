@@ -45,7 +45,7 @@ export class Layout extends HTMLElement {
         `;
     shadow.adoptedStyleSheets = [s];
     this.innerHTML = `
-        <g-board slot="table" id="table" ondrop></g-board>
+        <g-board slot="table" id="table"></g-board>
         <g-pool slot="pool"></g-pool>
         <g-board slot="board" id="board" drop></g-board>
         <div slot="players">

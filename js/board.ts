@@ -207,7 +207,7 @@ export class Tile extends HTMLElement {
     );
     const board = (drop_target as Element)?.closest("g-board") as Board;
     board?.space();
-    if ((board as any)?.ondrop) {
+    if (board === elements.table) {
       publishTable(end_event);
     }
   }
