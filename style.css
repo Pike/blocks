@@ -50,18 +50,18 @@ g-board {
   position: absolute;
 }
 
-g-stone.blue {
+g-tile.blue {
   color: blue;
 }
 
-g-stone.red {
+g-tile.red {
   color: red;
 }
 
-g-stone.orange {
+g-tile.orange {
   color: #f78e08;
 }
 
-g-stone.black {
+g-tile.black {
   color: black;
 }

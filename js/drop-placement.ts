@@ -11,7 +11,7 @@ export interface IndexedRect {
 }
 
 export type Placement =
-  | { kind: "empty-group" }
+  | { kind: "empty-cluster" }
   | {
       kind: "insert";
       targetIndex: number;
@@ -23,7 +23,7 @@ export type Placement =
       position: "beforebegin" | "afterend";
     };
 
-export interface StoneIdentity {
+export interface TileIdentity {
   value: string;
   color: string;
 }
@@ -40,21 +40,21 @@ function insertPosition(
 }
 
 /**
- * Decide where a dropped stone lands among the sibling stones of its
- * drop zone. `stones` must be in document order. Pure function extracted
+ * Decide where a dropped tile lands among the sibling tiles of its
+ * drop zone. `tiles` must be in document order. Pure function extracted
  * from the interact.js-driven bisection/scan that used to live inline in
- * `Stone.maybeDrop`.
+ * `Tile.maybeDrop`.
  */
 export function resolvePlacement(
   dropRect: Rect,
-  stones: IndexedRect[],
+  tiles: IndexedRect[],
 ): Placement {
-  if (stones.length === 0) {
-    return { kind: "empty-group" };
+  if (tiles.length === 0) {
+    return { kind: "empty-cluster" };
   }
   const cy = dropRect.top + (dropRect.bottom - dropRect.top) / 2;
 
-  let candidates = stones;
+  let candidates = tiles;
   let exactMatch: IndexedRect | undefined;
 
   while (candidates.length > 3) {
@@ -126,13 +126,13 @@ export function resolvePlacement(
 }
 
 /**
- * A run (same color, consecutive values) must split into two groups when
- * the stone that used to sit between `prev` and `next` is pulled out,
+ * A run (same color, consecutive values) must split into two clusters when
+ * the tile that used to sit between `prev` and `next` is pulled out,
  * since `prev` and `next` are no longer consecutive.
  */
-export function shouldSplitGroup(
-  prev: StoneIdentity,
-  next: StoneIdentity,
+export function shouldSplitCluster(
+  prev: TileIdentity,
+  next: TileIdentity,
 ): boolean {
   return prev.color === next.color && prev.value !== next.value;
 }

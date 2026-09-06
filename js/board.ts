@@ -1,14 +1,14 @@
 import interact from "interactjs";
 import { elements } from "./elements";
 import {
-  createStone,
+  createTile,
   color_classes,
-  Stone as StoneModel,
+  Tile as TileModel,
   type ColorClass,
 } from "./model";
 import {
   resolvePlacement,
-  shouldSplitGroup,
+  shouldSplitCluster,
   type IndexedRect,
 } from "./drop-placement";
 
@@ -23,29 +23,29 @@ interface InteractEvent {
   target?: HTMLElement;
 }
 
-const group_sheet = new CSSStyleSheet();
-group_sheet.replaceSync(`
+const cluster_sheet = new CSSStyleSheet();
+cluster_sheet.replaceSync(`
 :host {
   display: inline-block;
   margin-right: 1ex;
 }
 `);
 
-export class Group extends HTMLElement {
+export class Cluster extends HTMLElement {
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.adoptedStyleSheets = [group_sheet];
+    shadow.adoptedStyleSheets = [cluster_sheet];
     shadow.innerHTML = `<slot></slot>`;
   }
 
   toString() {
-    return Array.from(this.querySelectorAll("g-stone")).map(String).join("");
+    return Array.from(this.querySelectorAll("g-tile")).map(String).join("");
   }
 }
 
-const stone_sheet = new CSSStyleSheet();
-stone_sheet.replaceSync(`
+const tile_sheet = new CSSStyleSheet();
+tile_sheet.replaceSync(`
 :host {
   display: inline-block;
 }
@@ -63,40 +63,40 @@ span {
 }
 `);
 
-export class Stone extends HTMLElement {
-  private stone_: StoneModel | undefined;
+export class Tile extends HTMLElement {
+  private tile_: TileModel | undefined;
 
   constructor(serialized?: string) {
     super();
-    this.stone_ = undefined;
+    this.tile_ = undefined;
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.adoptedStyleSheets = [stone_sheet];
+    shadow.adoptedStyleSheets = [tile_sheet];
     shadow.innerHTML = `
         <span><slot></slot></span>
         `;
     if (!serialized) {
       return;
     }
-    this.stone = createStone(serialized);
+    this.tile = createTile(serialized);
   }
 
-  get stone(): StoneModel | undefined {
-    return this.stone_;
+  get tile(): TileModel | undefined {
+    return this.tile_;
   }
 
-  set stone(stone: StoneModel) {
-    this.stone_ = stone;
+  set tile(tile: TileModel) {
+    this.tile_ = tile;
     this.classList.forEach((c) => {
       if (color_classes.includes(c as ColorClass)) {
         this.classList.remove(c);
       }
     });
-    this.classList.add(stone.color);
-    this.textContent = stone.value;
+    this.classList.add(tile.color);
+    this.textContent = tile.value;
   }
 
   toString(): string {
-    return this.stone ? this.stone.toString() : " ";
+    return this.tile ? this.tile.toString() : " ";
   }
 
   connectedCallback(): void {
@@ -116,21 +116,21 @@ export class Stone extends HTMLElement {
           this.style.transform = `translate(${dragPosition.x}px, ${dragPosition.y}px)`;
         },
         end: (end: InteractEvent) => {
-          const original_group = this.parentElement;
+          const original_cluster = this.parentElement;
           this.maybeDrop(end);
           if (
-            original_group &&
-            original_group.localName === "g-group" &&
-            original_group.childElementCount === 0
+            original_cluster &&
+            original_cluster.localName === "g-cluster" &&
+            original_cluster.childElementCount === 0
           ) {
-            if (original_group.childElementCount === 0) {
+            if (original_cluster.childElementCount === 0) {
               if (
-                original_group.nextSibling &&
-                original_group.nextSibling.nodeType === Node.TEXT_NODE
+                original_cluster.nextSibling &&
+                original_cluster.nextSibling.nodeType === Node.TEXT_NODE
               ) {
-                original_group.nextSibling.remove();
+                original_cluster.nextSibling.remove();
               }
-              original_group.remove();
+              original_cluster.remove();
             }
           }
           dragPosition.x = 0;
@@ -146,20 +146,20 @@ export class Stone extends HTMLElement {
       return;
     }
     const rect = end_event.rect || end_event.interactable.getRect();
-    const stones = Array.from(
-      end_event.relatedTarget.querySelectorAll("g-stone"),
+    const tiles = Array.from(
+      end_event.relatedTarget.querySelectorAll("g-tile"),
     ).filter((n: any) => n !== end_event.target) as any[];
 
-    const indexed_rects: IndexedRect[] = stones.map((node, index) => ({
+    const indexed_rects: IndexedRect[] = tiles.map((node, index) => ({
       index,
       rect: interact.getElementRect(node as any),
     }));
     const placement = resolvePlacement(rect, indexed_rects);
 
-    if (placement.kind === "empty-group") {
-      const first_group = new Group();
-      first_group.append(this);
-      end_event.relatedTarget.append(first_group);
+    if (placement.kind === "empty-cluster") {
+      const first_cluster = new Cluster();
+      first_cluster.append(this);
+      end_event.relatedTarget.append(first_cluster);
       end_event.relatedTarget.append(" ");
       return;
     }
@@ -168,9 +168,9 @@ export class Stone extends HTMLElement {
     const position = placement.position;
     let drop_target: any =
       placement.kind === "insert"
-        ? stones[placement.targetIndex]
+        ? tiles[placement.targetIndex]
         : placement.anchorIndex !== null
-          ? stones[placement.anchorIndex]
+          ? tiles[placement.anchorIndex]
           : undefined;
 
     // Do we need to split the old block? Only if we're a series
@@ -179,25 +179,25 @@ export class Stone extends HTMLElement {
       (next = this.nextElementSibling) &&
       (previous = this.previousElementSibling)
     ) {
-      const nextStone = next as Stone;
-      const prevStone = previous as Stone;
+      const nextTile = next as Tile;
+      const prevTile = previous as Tile;
       if (
-        nextStone.stone &&
-        prevStone.stone &&
-        shouldSplitGroup(prevStone.stone, nextStone.stone)
+        nextTile.tile &&
+        prevTile.tile &&
+        shouldSplitCluster(prevTile.tile, nextTile.tile)
       ) {
-        const split_group = new Group();
+        const split_cluster = new Cluster();
         while (next) {
-          split_group.append(next);
+          split_cluster.append(next);
           next = this.nextElementSibling;
         }
-        this.parentElement?.insertAdjacentElement("afterend", split_group);
+        this.parentElement?.insertAdjacentElement("afterend", split_cluster);
         this.parentElement?.insertAdjacentText("afterend", " ");
       }
     }
-    let drop_source: Element | Group = this;
+    let drop_source: Element | Cluster = this;
     if (new_block) {
-      drop_source = new Group();
+      drop_source = new Cluster();
       drop_target = (drop_target as Element)?.parentElement;
       drop_source.append(this);
     }
@@ -256,11 +256,11 @@ export class Board extends HTMLElement {
   }
 
   data(): string[] {
-    return Array.from(this.querySelectorAll("g-group")).map(String);
+    return Array.from(this.querySelectorAll("g-cluster")).map(String);
   }
 
   space(): void {
-    for (const g of this.querySelectorAll("g-group")) {
+    for (const g of this.querySelectorAll("g-cluster")) {
       if (!g.nextSibling) continue;
       if (g.nextSibling.nodeType !== Node.TEXT_NODE) {
         g.insertAdjacentText("afterend", " ");
@@ -269,26 +269,26 @@ export class Board extends HTMLElement {
   }
 
   get empty(): boolean {
-    return this.querySelector("g-stone") === null;
+    return this.querySelector("g-tile") === null;
   }
 
-  appendStone(stone: StoneModel): void {
-    const stone_el = new Stone();
-    stone_el.stone = stone;
-    const group = new Group();
-    group.append(stone_el);
-    this.append(group);
+  appendTile(tile: TileModel): void {
+    const tile_el = new Tile();
+    tile_el.tile = tile;
+    const cluster = new Cluster();
+    cluster.append(tile_el);
+    this.append(cluster);
     this.append(" ");
   }
 
   *elems(serialized: string[]): Generator<HTMLElement> {
-    let group: HTMLElement;
+    let cluster: HTMLElement;
     for (const word of serialized) {
-      group = document.createElement("g-group");
+      cluster = document.createElement("g-cluster");
       for (const char of word) {
-        group.appendChild(new Stone(char));
+        cluster.appendChild(new Tile(char));
       }
-      yield group;
+      yield cluster;
     }
   }
 }
@@ -325,6 +325,6 @@ export class Pool extends HTMLElement {
 }
 
 customElements.define("g-board", Board);
-customElements.define("g-group", Group);
-customElements.define("g-stone", Stone);
+customElements.define("g-cluster", Cluster);
+customElements.define("g-tile", Tile);
 customElements.define("g-pool", Pool);

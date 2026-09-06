@@ -6,7 +6,6 @@ A browser-based Rummikub implementation played over WebRTC. Canonical gameplay v
 
 **Tile**:
 One of the 106 numbered, colored playing pieces (or a Joker) that players hold and play.
-_Avoid_: Stone (legacy code name — the code's `Stone` class, `g-stone` element, and `createStone()` have not yet been renamed)
 
 **Rack**:
 A player's private collection of tiles, not visible to other players.
@@ -25,8 +24,7 @@ A Set of three or four tiles of the same number in different colors.
 A Set of three or more consecutive numbers, all in the same color. 1 is always the lowest number and cannot follow 13.
 
 **Cluster**:
-The code's current freeform arrangement of tiles dragged next to each other in the UI (the `Group` class/`g-group` element). Unlike a Set, a Cluster has no validity requirement — it does not have to be a legal Group or Run.
-_Avoid_: Group (as used in code — collides with the rulebook's validated Group concept)
+The code's current freeform arrangement of tiles dragged next to each other in the UI (the `Cluster` class/`g-cluster` element). Unlike a Set, a Cluster has no validity requirement — it does not have to be a legal Group or Run.
 
 **Initial Meld**:
 The rule that a player's first play must consist of tiles from their Rack totaling at least 30 points, and may not use tiles already on the Table. Not yet implemented in code.

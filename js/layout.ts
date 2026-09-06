@@ -1,7 +1,7 @@
 import type { Player } from "./player";
 import { elements } from "./elements";
 import state from "./state";
-import { createStone } from "./model";
+import { createTile } from "./model";
 
 const s = new CSSStyleSheet();
 s.replaceSync(`
@@ -124,10 +124,10 @@ export class Layout extends HTMLElement {
     }
     const next = (current.nextElementSibling ||
       current.parentElement?.firstElementChild) as Player | undefined;
-    if (current.needsStone) {
+    if (current.needsTile) {
       const poolToken = pool.pop();
       if (poolToken) {
-        board.appendStone(createStone(poolToken));
+        board.appendTile(createTile(poolToken));
       }
     }
     current.deactivate();

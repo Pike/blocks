@@ -1,7 +1,7 @@
 export const color_classes = ["black", "blue", "orange", "red"] as const;
 export type ColorClass = (typeof color_classes)[number];
 
-export class Stone {
+export class Tile {
   color: ColorClass;
   value: string;
 
@@ -25,7 +25,7 @@ export class Stone {
   }
 }
 
-export function createStone(token: string): Stone {
+export function createTile(token: string): Tile {
   let codepoint = token.codePointAt(0)!;
   const color_num = codepoint % 4;
   let value: string | number = codepoint >> 2;
@@ -34,20 +34,20 @@ export function createStone(token: string): Stone {
   } else {
     value = String(value);
   }
-  return new Stone(color_classes[color_num], value);
+  return new Tile(color_classes[color_num], value);
 }
 
 export class Deck {
-  cards: Stone[];
+  cards: Tile[];
 
   constructor() {
     const double_cols = color_classes.concat(color_classes);
     const values = Array(13)
       .fill(0)
       .map((_, i) => String(i + 1));
-    this.cards = ([] as Stone[]).concat(
-      [new Stone("black", "🤴🏿"), new Stone("red", "🤴🏻")],
-      ...double_cols.map((color) => values.map((val) => new Stone(color, val))),
+    this.cards = ([] as Tile[]).concat(
+      [new Tile("black", "🤴🏿"), new Tile("red", "🤴🏻")],
+      ...double_cols.map((color) => values.map((val) => new Tile(color, val))),
     );
   }
   shuffle(): void {
@@ -60,7 +60,7 @@ export class Deck {
       ];
     }
   }
-  pop(): Stone | undefined {
+  pop(): Tile | undefined {
     return this.cards.pop();
   }
   toString(): string {

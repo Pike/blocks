@@ -63,9 +63,9 @@ export class Player extends HTMLElement {
   async deal(pool: string[]): Promise<string[]> {
     const { board, table } = elements;
     console.log("deal", pool);
-    // Convert stones to strings for drawing
-    const boardStones = pool.splice(0, 14);
-    board.drawGame(boardStones);
+    // Convert tiles to strings for drawing
+    const boardTiles = pool.splice(0, 14);
+    board.drawGame(boardTiles);
     table.drawGame([]);
     this.deactivate();
     return pool;
@@ -87,7 +87,7 @@ export class Player extends HTMLElement {
     game.markActive(peer);
   }
 
-  get needsStone(): boolean {
+  get needsTile(): boolean {
     const { board } = elements;
     return this.preBoard_ === board.data().join("").split("").sort().join("");
   }
